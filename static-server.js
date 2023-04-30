@@ -72,7 +72,7 @@ class StaticServer {
         fs.stat(pathName, (err, stat) => {
             if (err) return respondError(err, res);
             this.setFreshHeaders(stat, res);
-            if (this.isFresh(req.headers, res._headers)) {
+            if (this.isFresh(req.headers, res.getHeaders())) {
                 this.responseNotModified(res);
             } else {
                 this.responseFile(stat, pathName, req, res);
@@ -199,20 +199,20 @@ class StaticServer {
     }
 
     start(options) {
-		let server;
+        let server;
         const callback = ((req, res) => {
             const pathName = path.join(this.root, decodeURI(url.parse(req.url).pathname));
             this.routeHandler(pathName, req, res);
         });
-		if (options && (options.pfx || options.key)){
-			const http = require("https");
-			server = http.createServer(options, callback);
-		}else{
-			const http = require("http");
-			server = http.createServer(callback);			
-		}
-		
-		server.listen(this.port, err => {
+        if (options && (options.pfx || options.key)){
+            const http = require("https");
+            server = http.createServer(options, callback);
+        }else{
+            const http = require("http");
+            server = http.createServer(callback);			
+        }
+
+        server.listen(this.port, err => {
             if (err) {
                 console.error(err);
                 console.info('Failed to start server');
@@ -220,7 +220,7 @@ class StaticServer {
                 console.info(`Server started on port ${this.port}`);
             }
         });
-		return server;
+        return server;
     }
 }
 
