@@ -201,7 +201,7 @@ class StaticServer {
     start(options) {
 		let server;
         const callback = ((req, res) => {
-            const pathName = path.join(this.root, path.normalize(req.url));
+            const pathName = path.join(this.root, decodeURI(url.parse(req.url).pathname));
             this.routeHandler(pathName, req, res);
         });
 		if (options && (options.pfx || options.key)){
