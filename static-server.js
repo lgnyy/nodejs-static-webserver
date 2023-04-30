@@ -1,4 +1,4 @@
-const http = require('http');
+//const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const url = require('url');
@@ -6,23 +6,10 @@ const zlib = require('zlib');
 const mime = require('./mime');
 const config = require('./config/default');
 
-var options = require( "yargs" )
-    .option( "p", { alias: "port",  describe: "Port number", type: "number" } )
-    .option( "r", { alias: "root", describe: "Static resource directory", type: "string" } )
-    .option( "i", { alias: "index", describe: "Default page", type: "string" } )
-    .option( "c", { alias: "cachecontrol", default: true, describe: "Use Cache-Control", type: "boolean" } )
-    .option( "e", { alias: "expires", default: true, describe: "Use Expires", type: "boolean" } )
-    .option( "t", { alias: "etag", default: true, describe: "Use ETag", type: "boolean" } )
-    .option( "l", { alias: "lastmodified", default: true, describe: "Use Last-Modified", type: "boolean" } )
-    .option( "m", { alias: "maxage", describe: "Time a file should be cached for", type: "number" } )
-    .help()
-    .alias( "?", "help" )
-    .argv;
-
 const hasTrailingSlash = url => url[url.length - 1] === '/';
 
 class StaticServer {
-    constructor() {
+    constructor(options) {
         this.port = options.p || config.port;
         this.root = options.r || config.root;
         this.indexPage = options.i || config.indexPage;
@@ -211,11 +198,21 @@ class StaticServer {
         });
     }
 
-    start() {
-        http.createServer((req, res) => {
+    start(options) {
+		let server;
+        const callback = ((req, res) => {
             const pathName = path.join(this.root, path.normalize(req.url));
             this.routeHandler(pathName, req, res);
-        }).listen(this.port, err => {
+        });
+		if (options && (options.pfx || options.key)){
+			const http = require("https");
+			server = http.createServer(options, callback);
+		}else{
+			const http = require("http");
+			server = http.createServer(callback);			
+		}
+		
+		server.listen(this.port, err => {
             if (err) {
                 console.error(err);
                 console.info('Failed to start server');
@@ -223,6 +220,7 @@ class StaticServer {
                 console.info(`Server started on port ${this.port}`);
             }
         });
+		return server;
     }
 }
 
